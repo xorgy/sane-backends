@@ -1166,11 +1166,14 @@ write_pnm_header (SANE_Frame format, int width, int height, int depth, FILE *ofp
 
 #ifdef HAVE_LIBPNG
 static void
-write_png_header (SANE_Frame format, int width, int height, int depth, const char * icc_profile, FILE *ofp, png_structp* png_ptr, png_infop* info_ptr)
+write_png_header (SANE_Frame format, int width, int height, int depth, int dpi, const char * icc_profile, FILE *ofp, png_structp* png_ptr, png_infop* info_ptr)
 {
   int color_type;
   size_t icc_size = 0;
   void *icc_buffer;
+  /* PNG does not have imperial reference units, so we must convert to metric. */
+  /* There are nominally 39.3700787401575 inches in a meter. */
+  const double pixels_per_meter = dpi * 39.3700787401575;
 
   *png_ptr = png_create_write_struct
        (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -1232,6 +1235,10 @@ write_png_header (SANE_Frame format, int width, int height, int depth, const cha
 	  free(icc_buffer);
 	}
     }
+
+  png_set_pHYs(*png_ptr, *info_ptr,
+    pixels_per_meter, pixels_per_meter,
+    PNG_RESOLUTION_METER);
 
   png_write_info(*png_ptr, *info_ptr);
 }
@@ -1412,8 +1419,8 @@ scan_it (FILE *ofp)
 #ifdef HAVE_LIBPNG
 		  case OUTPUT_PNG:
 		    write_png_header (parm.format, parm.pixels_per_line,
-				      parm.lines, parm.depth, icc_profile,
-				      ofp, &png_ptr, &info_ptr);
+				      parm.lines, parm.depth, resolution_value,
+				      icc_profile, ofp, &png_ptr, &info_ptr);
 		    break;
 #endif
 #ifdef HAVE_LIBJPEG
@@ -1669,8 +1676,8 @@ scan_it (FILE *ofp)
 #ifdef HAVE_LIBPNG
       case OUTPUT_PNG:
 	write_png_header (parm.format, parm.pixels_per_line,
-			  image.height, parm.depth, icc_profile,
-			  ofp, &png_ptr, &info_ptr);
+			  image.height, parm.depth, resolution_value,
+			  icc_profile, ofp, &png_ptr, &info_ptr);
       break;
 #endif
 #ifdef HAVE_LIBJPEG
