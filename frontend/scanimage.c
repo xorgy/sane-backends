@@ -1170,8 +1170,15 @@ write_png_header (SANE_Frame format, int width, int height, int depth, int dpi, 
 {
   int color_type;
   /* PNG does not have imperial reference units, so we must convert to metric. */
-  /* There are nominally 39.3700787401575 inches in a meter. */
-  const double pixels_per_meter = dpi * 39.3700787401575;
+  /* The standard ratio of inches to meters is 5000:127 (25.4mm = 1in). */
+  /* The pHYs chunk measures whole pixels per meter, so we lose precision. */
+  const long double pixels_per_meter = dpi * 5000 / (long double) 127;
+#ifdef PNG_sCAL_SUPPORTED
+  /* The sCAL uses ASCII strings of floating point numbers to represent */
+  /* the size (in meters) of a pixel. libpng will convert from doubles for us. */
+  const double png_sCAL_pixel_pitch = 1.0 / pixels_per_meter;
+#endif
+
   size_t icc_size = 0;
   void *icc_buffer;
 
@@ -1209,6 +1216,11 @@ write_png_header (SANE_Frame format, int width, int height, int depth, int dpi, 
   png_set_pHYs(*png_ptr, *info_ptr,
     pixels_per_meter, pixels_per_meter,
     PNG_RESOLUTION_METER);
+
+#ifdef PNG_sCAL_SUPPORTED
+  png_set_sCAL(*png_ptr, *info_ptr, PNG_SCALE_METER,
+               png_sCAL_pixel_pitch, png_sCAL_pixel_pitch);
+#endif
 
   if (icc_profile)
     {
