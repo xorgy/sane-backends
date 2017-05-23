@@ -74,7 +74,8 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
   uint8_t outdata[8];
   uint8_t *buffer;
 
-  DBG (DBG_io, "gl847_bulk_read_data: requesting %lu bytes at addr=0x%02x\n", (u_long) len, addr);
+  DBG (DBG_io, "gl847_bulk_read_data: requesting %lu bytes at addr=0x%02x\n",
+       (u_long) len, addr);
 
   if (len == 0)
     return SANE_STATUS_GOOD;
@@ -108,8 +109,7 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
 
       status =
 	sanei_usb_control_msg (dev->dn, REQUEST_TYPE_OUT, REQUEST_BUFFER,
-			       VALUE_BUFFER, 0x00, sizeof (outdata),
-			       outdata);
+			       VALUE_BUFFER, 0x00, sizeof (outdata), outdata);
       if (status != SANE_STATUS_GOOD)
 	{
 	  DBG (DBG_error, "%s failed while writing command: %s\n",
@@ -136,8 +136,9 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
 	       sane_strstatus (status));
 	  return status;
 	}
-      done=read;
-      DBG (DBG_io2, "gl847_bulk_read_data: %lu bytes of data read\n", (u_long) done);
+      done = read;
+      DBG (DBG_io2, "gl847_bulk_read_data: %lu bytes of data read\n",
+	   (u_long) done);
 
       /* read less than 512 bytes remainder */
       if (read < size)
@@ -146,7 +147,7 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
 	  DBG (DBG_io2,
 	       "gl847_bulk_read_data: trying to read %lu bytes of data\n",
 	       (u_long) read);
-	  status = sanei_usb_read_bulk (dev->dn, buffer+done, &read);
+	  status = sanei_usb_read_bulk (dev->dn, buffer + done, &read);
 	  if (status != SANE_STATUS_GOOD)
 	    {
 	      DBG (DBG_error,
@@ -154,8 +155,9 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
 		   sane_strstatus (status));
 	      return status;
 	    }
-          done=read;
-          DBG (DBG_io2, "gl847_bulk_read_data: %lu bytes of data read\n", (u_long) done);
+	  done = read;
+	  DBG (DBG_io2, "gl847_bulk_read_data: %lu bytes of data read\n",
+	       (u_long) done);
 	}
 
       DBG (DBG_io2, "%s: read %lu bytes, %lu remaining\n", __func__,
@@ -165,9 +167,9 @@ gl847_bulk_read_data (Genesys_Device * dev, uint8_t addr,
       buffer += size;
     }
 
-  if (DBG_LEVEL >= DBG_data && dev->binary!=NULL)
+  if (DBG_LEVEL >= DBG_data && dev->binary != NULL)
     {
-      fwrite(data, len, 1, dev->binary);
+      fwrite (data, len, 1, dev->binary);
     }
 
   DBGCOMPLETED;
@@ -262,7 +264,7 @@ gl847_get_step_multiplier (Genesys_Register_Set * regs)
   r = sanei_genesys_get_address (regs, 0x9d);
   if (r != NULL)
     {
-      value = (r->value & 0x0f)>>1;
+      value = (r->value & 0x0f) >> 1;
       value = 1 << value;
     }
   DBG (DBG_io, "%s: step multiplier is %d\n", __func__, value);
@@ -276,45 +278,45 @@ gl847_get_step_multiplier (Genesys_Register_Set * regs)
  * @param dpi hardware dpi for the scan
  * @return a pointer to a Sensor_Profile struct
  */
-static Sensor_Profile *get_sensor_profile(int sensor_type, int dpi)
+static Sensor_Profile *
+get_sensor_profile (int sensor_type, int dpi)
 {
   unsigned int i;
   int idx;
 
-  i=0;
-  idx=-1;
-  while(i<sizeof(sensors)/sizeof(Sensor_Profile))
+  i = 0;
+  idx = -1;
+  while (i < sizeof (sensors) / sizeof (Sensor_Profile))
     {
       /* exact match */
-      if(sensors[i].sensor_type==sensor_type && sensors[i].dpi==dpi)
-        {
-          return &(sensors[i]);
-        }
+      if (sensors[i].sensor_type == sensor_type && sensors[i].dpi == dpi)
+	{
+	  return &(sensors[i]);
+	}
 
       /* closest match */
-      if(sensors[i].sensor_type==sensor_type)
-        {
-          if(idx<0)
-            {
-              idx=i;
-            }
-          else
-            {
-              if(sensors[i].dpi>=dpi
-              && sensors[i].dpi<sensors[idx].dpi)
-                {
-                  idx=i;
-                }
-            }
-        }
+      if (sensors[i].sensor_type == sensor_type)
+	{
+	  if (idx < 0)
+	    {
+	      idx = i;
+	    }
+	  else
+	    {
+	      if (sensors[i].dpi >= dpi && sensors[i].dpi < sensors[idx].dpi)
+		{
+		  idx = i;
+		}
+	    }
+	}
       i++;
     }
 
   /* default fallback */
-  if(idx<0)
+  if (idx < 0)
     {
-      DBG (DBG_warn,"%s: using default sensor profile\n",__func__);
-      idx=0;
+      DBG (DBG_warn, "%s: using default sensor profile\n", __func__);
+      idx = 0;
     }
 
   return &(sensors[idx]);
@@ -323,11 +325,12 @@ static Sensor_Profile *get_sensor_profile(int sensor_type, int dpi)
 /**@brief compute exposure to use
  * compute the sensor exposure based on target resolution
  */
-static int gl847_compute_exposure(Genesys_Device *dev, int xres)
+static int
+gl847_compute_exposure (Genesys_Device * dev, int xres)
 {
   Sensor_Profile *sensor;
 
-  sensor=get_sensor_profile(dev->model->ccd_type, xres);
+  sensor = get_sensor_profile (dev->model->ccd_type, xres);
   return sensor->exposure;
 }
 
@@ -335,7 +338,8 @@ static int gl847_compute_exposure(Genesys_Device *dev, int xres)
 /** @brief sensor specific settings
 */
 static void
-gl847_setup_sensor (Genesys_Device * dev, Genesys_Register_Set * regs, int dpi)
+gl847_setup_sensor (Genesys_Device * dev, Genesys_Register_Set * regs,
+		    int dpi)
 {
   Genesys_Register_Set *r;
   Sensor_Profile *sensor;
@@ -343,7 +347,7 @@ gl847_setup_sensor (Genesys_Device * dev, Genesys_Register_Set * regs, int dpi)
   uint16_t exp;
 
   DBGSTART;
-  dpihw=sanei_genesys_compute_dpihw(dev,dpi);
+  dpihw = sanei_genesys_compute_dpihw (dev, dpi);
 
   for (i = 0x06; i < 0x0e; i++)
     {
@@ -360,39 +364,40 @@ gl847_setup_sensor (Genesys_Device * dev, Genesys_Register_Set * regs, int dpi)
     }
 
   /* set EXPDUMMY and CKxMAP */
-  dpihw=sanei_genesys_compute_dpihw(dev,dpi);
-  sensor=get_sensor_profile(dev->model->ccd_type, dpihw);
+  dpihw = sanei_genesys_compute_dpihw (dev, dpi);
+  sensor = get_sensor_profile (dev->model->ccd_type, dpihw);
 
-  sanei_genesys_set_reg_from_set(regs,REG_EXPDMY,(uint8_t)((sensor->expdummy) & 0xff));
+  sanei_genesys_set_reg_from_set (regs, REG_EXPDMY,
+				  (uint8_t) ((sensor->expdummy) & 0xff));
 
   /* if no calibration has been done, set default values for exposures */
-  exp=dev->sensor.regs_0x10_0x1d[0]*256+dev->sensor.regs_0x10_0x1d[1];
-  if(exp==0)
+  exp = dev->sensor.regs_0x10_0x1d[0] * 256 + dev->sensor.regs_0x10_0x1d[1];
+  if (exp == 0)
     {
-      exp=sensor->expr;
+      exp = sensor->expr;
     }
-  sanei_genesys_set_double(regs,REG_EXPR,exp);
+  sanei_genesys_set_double (regs, REG_EXPR, exp);
 
-  exp=dev->sensor.regs_0x10_0x1d[2]*256+dev->sensor.regs_0x10_0x1d[3];
-  if(exp==0)
+  exp = dev->sensor.regs_0x10_0x1d[2] * 256 + dev->sensor.regs_0x10_0x1d[3];
+  if (exp == 0)
     {
-      exp=sensor->expg;
+      exp = sensor->expg;
     }
-  sanei_genesys_set_double(regs,REG_EXPG,exp);
+  sanei_genesys_set_double (regs, REG_EXPG, exp);
 
-  exp=dev->sensor.regs_0x10_0x1d[4]*256+dev->sensor.regs_0x10_0x1d[5];
-  if(exp==0)
+  exp = dev->sensor.regs_0x10_0x1d[4] * 256 + dev->sensor.regs_0x10_0x1d[5];
+  if (exp == 0)
     {
-      exp=sensor->expb;
+      exp = sensor->expb;
     }
-  sanei_genesys_set_double(regs,REG_EXPB,exp);
+  sanei_genesys_set_double (regs, REG_EXPB, exp);
 
-  sanei_genesys_set_triple(regs,REG_CK1MAP,sensor->ck1map);
-  sanei_genesys_set_triple(regs,REG_CK3MAP,sensor->ck3map);
-  sanei_genesys_set_triple(regs,REG_CK4MAP,sensor->ck4map);
+  sanei_genesys_set_triple (regs, REG_CK1MAP, sensor->ck1map);
+  sanei_genesys_set_triple (regs, REG_CK3MAP, sensor->ck3map);
+  sanei_genesys_set_triple (regs, REG_CK4MAP, sensor->ck4map);
 
   /* order of the sub-segments */
-  dev->order=sensor->order;
+  dev->order = sensor->order;
 
   r = sanei_genesys_get_address (regs, 0x17);
   r->value = sensor->r17;
@@ -418,14 +423,14 @@ gl847_bulk_full_size (void)
 static void
 gl847_init_registers (Genesys_Device * dev)
 {
-  int lide700=0;
+  int lide700 = 0;
   uint8_t val;
 
   DBGSTART;
   /* 700F class needs some different initial settings */
   if (strcmp (dev->model->name, "canon-lide-700f") == 0)
     {
-       lide700 = 1;
+      lide700 = 1;
     }
 
   memset (dev->reg, 0,
@@ -545,13 +550,13 @@ gl847_init_registers (Genesys_Device * dev)
   SETREG (0xca, 0x00);
 
   /* LiDE 700 fixups */
-  if(lide700)
+  if (lide700)
     {
       SETREG (0x5f, 0x04);
       SETREG (0x7d, 0x80);
 
       /* we write to these registers only once */
-      val=0;
+      val = 0;
       sanei_genesys_write_register (dev, REG7E, val);
       sanei_genesys_write_register (dev, REG9E, val);
       sanei_genesys_write_register (dev, REG9F, val);
@@ -604,7 +609,7 @@ gl847_send_slope_table (Genesys_Device * dev, int table_nr,
        table_nr, steps);
 
   /* sanity check */
-  if(table_nr<0 || table_nr>4)
+  if (table_nr < 0 || table_nr > 4)
     {
       DBG (DBG_error, "%s: invalid table number %d!\n", __func__, table_nr);
       return SANE_STATUS_INVAL;
@@ -622,14 +627,16 @@ gl847_send_slope_table (Genesys_Device * dev, int table_nr,
       sprintf (msg, "write slope %d (%d)=", table_nr, steps);
       for (i = 0; i < steps; i++)
 	{
-	  sprintf (msg+strlen(msg), "%d", slope_table[i]);
+	  sprintf (msg + strlen (msg), "%d", slope_table[i]);
 	}
       DBG (DBG_io, "%s: %s\n", __func__, msg);
     }
 
   /* slope table addresses are fixed */
   status =
-    sanei_genesys_write_ahb (dev->dn, dev->usb_mode, 0x10000000 + 0x4000 * table_nr, steps * 2, table);
+    sanei_genesys_write_ahb (dev->dn, dev->usb_mode,
+			     0x10000000 + 0x4000 * table_nr, steps * 2,
+			     table);
   if (status != SANE_STATUS_GOOD)
     {
       DBG (DBG_error,
@@ -658,10 +665,10 @@ gl847_set_ad_fe (Genesys_Device * dev, uint8_t set)
   /* wait for FE to be ready */
   status = sanei_genesys_get_status (dev, &val8);
   while (val8 & REG41_FEBUSY);
-    {
-      usleep (10000);
-      status = sanei_genesys_get_status (dev, &val8);
-    };
+  {
+    usleep (10000);
+    status = sanei_genesys_get_status (dev, &val8);
+  };
 
   if (set == AFE_INIT)
     {
@@ -729,10 +736,10 @@ gl847_set_ad_fe (Genesys_Device * dev, uint8_t set)
 }
 
 static SANE_Status
-gl847_homsnr_gpio(Genesys_Device *dev)
+gl847_homsnr_gpio (Genesys_Device * dev)
 {
-uint8_t val;
-SANE_Status status=SANE_STATUS_GOOD;
+  uint8_t val;
+  SANE_Status status = SANE_STATUS_GOOD;
 
   if (dev->model->gpo_type == GPO_CANONLIDE700)
     {
@@ -781,15 +788,14 @@ gl847_set_fe (Genesys_Device * dev, uint8_t set)
  */
 static SANE_Status
 gl847_init_motor_regs_scan (Genesys_Device * dev,
-                            Genesys_Register_Set * reg,
-                            unsigned int scan_exposure_time,
+			    Genesys_Register_Set * reg,
+			    unsigned int scan_exposure_time,
 			    float scan_yres,
 			    int scan_step_type,
 			    unsigned int scan_lines,
 			    unsigned int scan_dummy,
 			    unsigned int feed_steps,
-			    int scan_power_mode,
-                            unsigned int flags)
+			    int scan_power_mode, unsigned int flags)
 {
   SANE_Status status;
   int use_fast_fed;
@@ -803,7 +809,7 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
   unsigned int min_restep = 0x20;
   uint8_t val, effective;
   int fast_step_type;
-  unsigned int ccdlmt,tgtime;
+  unsigned int ccdlmt, tgtime;
 
   DBGSTART;
   DBG (DBG_proc, "gl847_init_motor_regs_scan : scan_exposure_time=%d, "
@@ -817,16 +823,16 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
   /* get step multiplier */
   factor = gl847_get_step_multiplier (reg);
 
-  use_fast_fed=0;
+  use_fast_fed = 0;
   /* no fast fed since feed works well */
-  if(dev->settings.yres==4444 && feed_steps>100
-     && ((flags & MOTOR_FLAG_FEED)==0))
+  if (dev->settings.yres == 4444 && feed_steps > 100
+      && ((flags & MOTOR_FLAG_FEED) == 0))
     {
-      use_fast_fed=1;
+      use_fast_fed = 1;
     }
   DBG (DBG_io, "%s: use_fast_fed=%d\n", __func__, use_fast_fed);
 
-  sanei_genesys_set_triple(reg, REG_LINCNT, scan_lines);
+  sanei_genesys_set_triple (reg, REG_LINCNT, scan_lines);
   DBG (DBG_io, "%s: lincnt=%d\n", __func__, scan_lines);
 
   /* compute register 02 value */
@@ -843,86 +849,87 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
     r->value |= REG02_AGOHOME | REG02_NOTHOME;
 
   if ((flags & MOTOR_FLAG_DISABLE_BUFFER_FULL_MOVE)
-      ||(scan_yres>=dev->sensor.optical_res))
+      || (scan_yres >= dev->sensor.optical_res))
     {
       r->value |= REG02_ACDCDIS;
     }
 
   /* scan and backtracking slope table */
-  sanei_genesys_slope_table(scan_table,
-                            &scan_steps,
-                            scan_yres,
-                            scan_exposure_time,
-                            dev->motor.base_ydpi,
-                            scan_step_type,
-                            factor,
-                            dev->model->motor_type,
-                            gl847_motors);
-  RIE(gl847_send_slope_table (dev, SCAN_TABLE, scan_table, scan_steps*factor));
-  RIE(gl847_send_slope_table (dev, BACKTRACK_TABLE, scan_table, scan_steps*factor));
+  sanei_genesys_slope_table (scan_table,
+			     &scan_steps,
+			     scan_yres,
+			     scan_exposure_time,
+			     dev->motor.base_ydpi,
+			     scan_step_type,
+			     factor, dev->model->motor_type, gl847_motors);
+  RIE (gl847_send_slope_table
+       (dev, SCAN_TABLE, scan_table, scan_steps * factor));
+  RIE (gl847_send_slope_table
+       (dev, BACKTRACK_TABLE, scan_table, scan_steps * factor));
 
   /* fast table */
-  fast_dpi=sanei_genesys_get_lowest_ydpi(dev);
-  fast_step_type=scan_step_type;
-  if(scan_step_type>=2)
+  fast_dpi = sanei_genesys_get_lowest_ydpi (dev);
+  fast_step_type = scan_step_type;
+  if (scan_step_type >= 2)
     {
-      fast_step_type=2;
+      fast_step_type = 2;
     }
 
-  sanei_genesys_slope_table(fast_table,
-                            &fast_steps,
-                            fast_dpi,
-                            scan_exposure_time,
-                            dev->motor.base_ydpi,
-                            fast_step_type,
-                            factor,
-                            dev->model->motor_type,
-                            gl847_motors);
+  sanei_genesys_slope_table (fast_table,
+			     &fast_steps,
+			     fast_dpi,
+			     scan_exposure_time,
+			     dev->motor.base_ydpi,
+			     fast_step_type,
+			     factor, dev->model->motor_type, gl847_motors);
 
   /* manual override of high start value */
-  fast_table[0]=fast_table[1];
+  fast_table[0] = fast_table[1];
 
-  RIE(gl847_send_slope_table (dev, STOP_TABLE, fast_table, fast_steps*factor));
-  RIE(gl847_send_slope_table (dev, FAST_TABLE, fast_table, fast_steps*factor));
-  RIE(gl847_send_slope_table (dev, HOME_TABLE, fast_table, fast_steps*factor));
+  RIE (gl847_send_slope_table
+       (dev, STOP_TABLE, fast_table, fast_steps * factor));
+  RIE (gl847_send_slope_table
+       (dev, FAST_TABLE, fast_table, fast_steps * factor));
+  RIE (gl847_send_slope_table
+       (dev, HOME_TABLE, fast_table, fast_steps * factor));
 
   /* correct move distance by acceleration and deceleration amounts */
-  feedl=feed_steps;
+  feedl = feed_steps;
   if (use_fast_fed)
     {
-        feedl<<=fast_step_type;
-        dist=(scan_steps+2*fast_steps)*factor;
-        /* TODO read and decode REGAB */
-        r = sanei_genesys_get_address (reg, 0x5e);
-        dist += (r->value & 31);
-        /* FEDCNT */
-        r = sanei_genesys_get_address (reg, REG_FEDCNT);
-        dist += r->value;
+      feedl <<= fast_step_type;
+      dist = (scan_steps + 2 * fast_steps) * factor;
+      /* TODO read and decode REGAB */
+      r = sanei_genesys_get_address (reg, 0x5e);
+      dist += (r->value & 31);
+      /* FEDCNT */
+      r = sanei_genesys_get_address (reg, REG_FEDCNT);
+      dist += r->value;
     }
   else
     {
-      feedl<<=scan_step_type;
-      dist=scan_steps*factor;
+      feedl <<= scan_step_type;
+      dist = scan_steps * factor;
       if (flags & MOTOR_FLAG_FEED)
-        dist *=2;
+	dist *= 2;
     }
   DBG (DBG_io2, "%s: scan steps=%d\n", __func__, scan_steps);
   DBG (DBG_io2, "%s: acceleration distance=%d\n", __func__, dist);
 
   /* check for overflow */
-  if(dist<feedl)
+  if (dist < feedl)
     feedl -= dist;
   else
     feedl = 0;
 
-  sanei_genesys_set_triple(reg,REG_FEEDL,feedl);
-  DBG (DBG_io ,"%s: feedl=%d\n",__func__,feedl);
+  sanei_genesys_set_triple (reg, REG_FEEDL, feedl);
+  DBG (DBG_io, "%s: feedl=%d\n", __func__, feedl);
 
   r = sanei_genesys_get_address (reg, REG0C);
-  ccdlmt=(r->value & REG0C_CCDLMT)+1;
+  ccdlmt = (r->value & REG0C_CCDLMT) + 1;
 
   r = sanei_genesys_get_address (reg, REG1C);
-  tgtime=1<<(r->value & REG1C_TGTIME);
+  tgtime = 1 << (r->value & REG1C_TGTIME);
 
   /* hi res motor speed GPIO */
   RIE (sanei_genesys_read_register (dev, REG6C, &effective));
@@ -931,13 +938,13 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
   if (scan_step_type > 1)
     {
       if (scan_step_type < 3)
-        {
-          val = effective & ~REG6C_GPIO13;
-        }
+	{
+	  val = effective & ~REG6C_GPIO13;
+	}
       else
-        {
-          val = effective | REG6C_GPIO13;
-        }
+	{
+	  val = effective | REG6C_GPIO13;
+	}
     }
   else
     {
@@ -950,7 +957,7 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
   val = effective | REG6C_GPIO10;
   RIE (sanei_genesys_write_register (dev, REG6C, val));
 
-  min_restep=scan_steps/2-1;
+  min_restep = scan_steps / 2 - 1;
   if (min_restep < 1)
     min_restep = 1;
   r = sanei_genesys_get_address (reg, REG_FWDSTEP);
@@ -958,20 +965,19 @@ gl847_init_motor_regs_scan (Genesys_Device * dev,
   r = sanei_genesys_get_address (reg, REG_BWDSTEP);
   r->value = min_restep;
 
-  sanei_genesys_calculate_zmode2(use_fast_fed,
-			         scan_exposure_time*ccdlmt*tgtime,
-				 scan_table,
-				 scan_steps*factor,
-				 feedl,
-                                 min_restep*factor,
-                                 &z1,
-                                 &z2);
+  sanei_genesys_calculate_zmode2 (use_fast_fed,
+				  scan_exposure_time * ccdlmt * tgtime,
+				  scan_table,
+				  scan_steps * factor,
+				  feedl, min_restep * factor, &z1, &z2);
 
   DBG (DBG_info, "gl847_init_motor_regs_scan: z1 = %d\n", z1);
-  sanei_genesys_set_triple(reg, REG60, z1 | (scan_step_type << (16+REG60S_STEPSEL)));
+  sanei_genesys_set_triple (reg, REG60,
+			    z1 | (scan_step_type << (16 + REG60S_STEPSEL)));
 
   DBG (DBG_info, "gl847_init_motor_regs_scan: z2 = %d\n", z2);
-  sanei_genesys_set_triple(reg, REG63, z2 | (scan_step_type << (16+REG63S_FSTPSEL)));
+  sanei_genesys_set_triple (reg, REG63,
+			    z2 | (scan_step_type << (16 + REG63S_FSTPSEL)));
 
   r = sanei_genesys_get_address (reg, 0x1e);
   r->value &= 0xf0;		/* 0 dummy lines */
@@ -1034,7 +1040,7 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
 {
   unsigned int words_per_line;
   unsigned int startx, endx, used_pixels;
-  unsigned int dpiset, dpihw,segnb,cksel,factor;
+  unsigned int dpiset, dpihw, segnb, cksel, factor;
   unsigned int bytes;
   Genesys_Register_Set *r;
   SANE_Status status;
@@ -1047,23 +1053,23 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
 
   /* resolution is divided according to CKSEL */
   r = sanei_genesys_get_address (reg, REG18);
-  cksel= (r->value & REG18_CKSEL)+1;
+  cksel = (r->value & REG18_CKSEL) + 1;
   DBG (DBG_io2, "%s: cksel=%d\n", __func__, cksel);
 
   /* to manage high resolution device while keeping good
    * low resolution scanning speed, we make hardware dpi vary */
-  dpihw=sanei_genesys_compute_dpihw(dev, used_res * cksel);
-  factor=dev->sensor.optical_res/dpihw;
+  dpihw = sanei_genesys_compute_dpihw (dev, used_res * cksel);
+  factor = dev->sensor.optical_res / dpihw;
   DBG (DBG_io2, "%s: dpihw=%d (factor=%d)\n", __func__, dpihw, factor);
 
   /* sensor parameters */
-  sensor=get_sensor_profile(dev->model->ccd_type, dpihw);
+  sensor = get_sensor_profile (dev->model->ccd_type, dpihw);
   gl847_setup_sensor (dev, reg, dpihw);
   dpiset = used_res * cksel;
 
   /* start and end coordinate in optical dpi coordinates */
-  startx = start/cksel+dev->sensor.CCD_start_xoffset;
-  used_pixels=pixels/cksel;
+  startx = start / cksel + dev->sensor.CCD_start_xoffset;
+  used_pixels = pixels / cksel;
 
   /* end of sensor window */
   endx = startx + used_pixels;
@@ -1072,31 +1078,31 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
    * and 1200 dpi for the 700F */
   if (dev->model->flags & GENESYS_FLAG_SIS_SENSOR)
     {
-      segnb=dpihw/600;
+      segnb = dpihw / 600;
     }
   else
     {
-      segnb=1;
+      segnb = 1;
     }
 
   /* compute pixel coordinate in the given dpihw space,
    * taking segments into account */
-  startx/=factor*segnb;
-  endx/=factor*segnb;
-  dev->len=endx-startx;
-  dev->dist=0;
-  dev->skip=0;
+  startx /= factor * segnb;
+  endx /= factor * segnb;
+  dev->len = endx - startx;
+  dev->dist = 0;
+  dev->skip = 0;
 
   /* in cas of multi-segments sensor, we have to add the witdh
    * of the sensor crossed by the scan area */
-  if (dev->model->flags & GENESYS_FLAG_SIS_SENSOR && segnb>1)
+  if (dev->model->flags & GENESYS_FLAG_SIS_SENSOR && segnb > 1)
     {
       dev->dist = sensor->segcnt;
     }
 
   /* use a segcnt rounded to next even number */
-  endx += ((dev->dist+1)&0xfffe)*(segnb-1);
-  used_pixels=endx-startx;
+  endx += ((dev->dist + 1) & 0xfffe) * (segnb - 1);
+  used_pixels = endx - startx;
 
   status = gl847_set_fe (dev, AFE_SET);
   if (status != SANE_STATUS_GOOD)
@@ -1176,20 +1182,20 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
 
   /* set up dpihw */
   r->value &= ~REG05_DPIHW;
-  switch(dpihw)
+  switch (dpihw)
     {
-      case 600:
-        r->value |= REG05_DPIHW_600;
-        break;
-      case 1200:
-        r->value |= REG05_DPIHW_1200;
-        break;
-      case 2400:
-        r->value |= REG05_DPIHW_2400;
-        break;
-      case 4800:
-        r->value |= REG05_DPIHW_4800;
-        break;
+    case 600:
+      r->value |= REG05_DPIHW_600;
+      break;
+    case 1200:
+      r->value |= REG05_DPIHW_1200;
+      break;
+    case 2400:
+      r->value |= REG05_DPIHW_2400;
+      break;
+    case 4800:
+      r->value |= REG05_DPIHW_4800;
+      break;
     }
 
   /* enable gamma tables */
@@ -1209,20 +1215,20 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
 	  r->value |= REG87_LEDADD;
 	}
       /* RGB weighting
-      r = sanei_genesys_get_address (reg, 0x01);
-      r->value &= ~REG01_TRUEGRAY;
-      if (channels == 1 && (flags & OPTICAL_FLAG_ENABLE_LEDADD))
-	{
-	  r->value |= REG01_TRUEGRAY;
-	}*/
+         r = sanei_genesys_get_address (reg, 0x01);
+         r->value &= ~REG01_TRUEGRAY;
+         if (channels == 1 && (flags & OPTICAL_FLAG_ENABLE_LEDADD))
+         {
+         r->value |= REG01_TRUEGRAY;
+         } */
     }
 
-  /* words(16bit) before gamma, conversion to 8 bit or lineart*/
+  /* words(16bit) before gamma, conversion to 8 bit or lineart */
   words_per_line = (used_pixels * dpiset) / dpihw;
-  bytes=depth/8;
+  bytes = depth / 8;
   if (depth == 1)
     {
-      words_per_line = (words_per_line+7)/8 ;
+      words_per_line = (words_per_line + 7) / 8;
       dev->len = (dev->len >> 3) + ((dev->len & 7) ? 1 : 0);
       dev->dist = (dev->dist >> 3) + ((dev->dist & 7) ? 1 : 0);
     }
@@ -1234,40 +1240,41 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
     }
 
   dev->bpl = words_per_line;
-  dev->cur=0;
-  dev->segnb=segnb;
+  dev->cur = 0;
+  dev->segnb = segnb;
   dev->line_interp = 0;
 
-  sanei_genesys_set_double(reg,REG_DPISET,dpiset);
+  sanei_genesys_set_double (reg, REG_DPISET, dpiset);
   DBG (DBG_io2, "%s: dpiset used=%d\n", __func__, dpiset);
 
-  sanei_genesys_set_double(reg,REG_STRPIXEL,startx);
-  sanei_genesys_set_double(reg,REG_ENDPIXEL,endx);
+  sanei_genesys_set_double (reg, REG_STRPIXEL, startx);
+  sanei_genesys_set_double (reg, REG_ENDPIXEL, endx);
   DBG (DBG_io2, "%s: startx=%d\n", __func__, startx);
   DBG (DBG_io2, "%s: endx  =%d\n", __func__, endx);
 
   DBG (DBG_io2, "%s: used_pixels=%d\n", __func__, used_pixels);
   DBG (DBG_io2, "%s: pixels     =%d\n", __func__, pixels);
   DBG (DBG_io2, "%s: depth      =%d\n", __func__, depth);
-  DBG (DBG_io2, "%s: dev->bpl   =%lu\n", __func__, (unsigned long)dev->bpl);
-  DBG (DBG_io2, "%s: dev->len   =%lu\n", __func__, (unsigned long)dev->len);
-  DBG (DBG_io2, "%s: dev->dist  =%lu\n", __func__, (unsigned long)dev->dist);
-  DBG (DBG_io2, "%s: dev->segnb =%lu\n", __func__, (unsigned long)dev->segnb);
+  DBG (DBG_io2, "%s: dev->bpl   =%lu\n", __func__, (unsigned long) dev->bpl);
+  DBG (DBG_io2, "%s: dev->len   =%lu\n", __func__, (unsigned long) dev->len);
+  DBG (DBG_io2, "%s: dev->dist  =%lu\n", __func__, (unsigned long) dev->dist);
+  DBG (DBG_io2, "%s: dev->segnb =%lu\n", __func__,
+       (unsigned long) dev->segnb);
 
   words_per_line *= channels;
   dev->wpl = words_per_line;
 
-  if(dev->oe_buffer.buffer!=NULL)
+  if (dev->oe_buffer.buffer != NULL)
     {
       sanei_genesys_buffer_free (&(dev->oe_buffer));
     }
   RIE (sanei_genesys_buffer_alloc (&(dev->oe_buffer), dev->wpl));
 
   /* MAXWD is expressed in 4 words unit */
-  sanei_genesys_set_triple(reg, REG_MAXWD, (words_per_line >> 2));
+  sanei_genesys_set_triple (reg, REG_MAXWD, (words_per_line >> 2));
   DBG (DBG_io2, "%s: words_per_line used=%d\n", __func__, words_per_line);
 
-  sanei_genesys_set_double(reg, REG_LPERIOD, exposure_time);
+  sanei_genesys_set_double (reg, REG_LPERIOD, exposure_time);
   DBG (DBG_io2, "%s: exposure_time used=%d\n", __func__, exposure_time);
 
   r = sanei_genesys_get_address (reg, 0x34);
@@ -1285,9 +1292,7 @@ gl847_init_optical_regs_scan (Genesys_Device * dev,
 static
 #endif
   SANE_Status
-gl847_init_scan_regs (Genesys_Device * dev,
-                      Genesys_Register_Set * reg,
-                      float xres,	/*dpi */
+gl847_init_scan_regs (Genesys_Device * dev, Genesys_Register_Set * reg, float xres,	/*dpi */
 		      float yres,	/*dpi */
 		      float startx,	/*optical_res, from dummy_pixel+1 */
 		      float starty,	/*base_ydpi, from home! */
@@ -1295,8 +1300,7 @@ gl847_init_scan_regs (Genesys_Device * dev,
 		      float lines,
 		      unsigned int depth,
 		      unsigned int channels,
-		      int color_filter,
-                      unsigned int flags)
+		      int color_filter, unsigned int flags)
 {
   int used_res;
   int start, used_pixels;
@@ -1381,7 +1385,7 @@ gl847_init_scan_regs (Genesys_Device * dev,
   if (used_pixels * xres < pixels * optical_res)
     used_pixels++;
 
-  dummy = 3-channels;
+  dummy = 3 - channels;
 
 /* slope_dpi */
 /* cis color scan is effectively a gray scan with 3 gray lines per color
@@ -1394,15 +1398,20 @@ gl847_init_scan_regs (Genesys_Device * dev,
   slope_dpi = slope_dpi * (1 + dummy);
 
   exposure_time = gl847_compute_exposure (dev, used_res);
-  scan_step_type = sanei_genesys_compute_step_type(gl847_motors, dev->model->motor_type, exposure_time);
+  scan_step_type =
+    sanei_genesys_compute_step_type (gl847_motors, dev->model->motor_type,
+				     exposure_time);
 
-  DBG (DBG_info, "gl847_init_scan_regs : exposure_time=%d pixels\n", exposure_time);
-  DBG (DBG_info, "gl847_init_scan_regs : scan_step_type=%d\n", scan_step_type);
+  DBG (DBG_info, "gl847_init_scan_regs : exposure_time=%d pixels\n",
+       exposure_time);
+  DBG (DBG_info, "gl847_init_scan_regs : scan_step_type=%d\n",
+       scan_step_type);
 
 /*** optical parameters ***/
   /* in case of dynamic lineart, we use an internal 8 bit gray scan
    * to generate 1 lineart data */
-  if ((flags & SCAN_FLAG_DYNAMIC_LINEART) && (dev->settings.scan_mode == SCAN_MODE_LINEART))
+  if ((flags & SCAN_FLAG_DYNAMIC_LINEART)
+      && (dev->settings.scan_mode == SCAN_MODE_LINEART))
     {
       depth = 8;
     }
@@ -1411,11 +1420,11 @@ gl847_init_scan_regs (Genesys_Device * dev,
    * scan since color calibration is OK for this mode
    */
   oflags = 0;
-  if(flags & SCAN_FLAG_DISABLE_SHADING)
+  if (flags & SCAN_FLAG_DISABLE_SHADING)
     oflags |= OPTICAL_FLAG_DISABLE_SHADING;
-  if(flags & SCAN_FLAG_DISABLE_GAMMA)
+  if (flags & SCAN_FLAG_DISABLE_GAMMA)
     oflags |= OPTICAL_FLAG_DISABLE_GAMMA;
-  if(flags & SCAN_FLAG_DISABLE_LAMP)
+  if (flags & SCAN_FLAG_DISABLE_LAMP)
     oflags |= OPTICAL_FLAG_DISABLE_LAMP;
 
   if (dev->model->is_cis && dev->settings.true_gray)
@@ -1431,9 +1440,7 @@ gl847_init_scan_regs (Genesys_Device * dev,
 					 used_pixels,
 					 channels,
 					 depth,
-					 half_ccd,
-					 color_filter,
-                                         oflags);
+					 half_ccd, color_filter, oflags);
 
   if (status != SANE_STATUS_GOOD)
     return status;
@@ -1441,7 +1448,7 @@ gl847_init_scan_regs (Genesys_Device * dev,
 /*** motor parameters ***/
 
   /* max_shift */
-  max_shift=sanei_genesys_compute_max_shift(dev,channels,yres,flags);
+  max_shift = sanei_genesys_compute_max_shift (dev, channels, yres, flags);
 
   /* lincnt */
   lincnt = lines + max_shift + stagger;
@@ -1450,21 +1457,20 @@ gl847_init_scan_regs (Genesys_Device * dev,
   move = starty;
   DBG (DBG_info, "gl847_init_scan_regs: move=%d steps\n", move);
 
-  mflags=0;
-  if(flags & SCAN_FLAG_DISABLE_BUFFER_FULL_MOVE)
+  mflags = 0;
+  if (flags & SCAN_FLAG_DISABLE_BUFFER_FULL_MOVE)
     mflags |= MOTOR_FLAG_DISABLE_BUFFER_FULL_MOVE;
-  if(flags & SCAN_FLAG_FEEDING)
+  if (flags & SCAN_FLAG_FEEDING)
     mflags |= MOTOR_FLAG_FEED;
 
-    status = gl847_init_motor_regs_scan (dev,
-					 reg,
-					 exposure_time,
-					 slope_dpi,
-					 scan_step_type,
-					 dev->model->is_cis ? lincnt *
-					 channels : lincnt, dummy, move,
-					 scan_power_mode,
-					 mflags);
+  status = gl847_init_motor_regs_scan (dev,
+				       reg,
+				       exposure_time,
+				       slope_dpi,
+				       scan_step_type,
+				       dev->model->is_cis ? lincnt *
+				       channels : lincnt, dummy, move,
+				       scan_power_mode, mflags);
 
   if (status != SANE_STATUS_GOOD)
     return status;
@@ -1479,10 +1485,10 @@ gl847_init_scan_regs (Genesys_Device * dev,
   requested_buffer_size = 8 * bytes_per_line;
   /* we must use a round number of bytes_per_line */
   /* XXX STEF XXX
-  if (requested_buffer_size > BULKIN_MAXSIZE)
-    requested_buffer_size =
-      (BULKIN_MAXSIZE / bytes_per_line) * bytes_per_line;
-  */
+     if (requested_buffer_size > BULKIN_MAXSIZE)
+     requested_buffer_size =
+     (BULKIN_MAXSIZE / bytes_per_line) * bytes_per_line;
+   */
 
   read_buffer_size =
     2 * requested_buffer_size +
@@ -1656,11 +1662,11 @@ gl847_calculate_current_setup (Genesys_Device * dev)
 
   /* compute correct pixels number */
   used_pixels = (pixels * optical_res) / used_res;
-  dummy = 3-channels;
+  dummy = 3 - channels;
 
   /* slope_dpi */
   /* cis color scan is effectively a gray scan with 3 gray lines per color
-   line and a FILTER of 0 */
+     line and a FILTER of 0 */
   if (dev->model->is_cis)
     slope_dpi = yres * channels;
   else
@@ -1672,7 +1678,7 @@ gl847_calculate_current_setup (Genesys_Device * dev)
   DBG (DBG_info, "%s : exposure_time=%d pixels\n", __func__, exposure_time);
 
   /* max_shift */
-  max_shift=sanei_genesys_compute_max_shift(dev,channels,yres,0);
+  max_shift = sanei_genesys_compute_max_shift (dev, channels, yres, 0);
 
   /* lincnt */
   lincnt = lines + max_shift + stagger;
@@ -1721,13 +1727,15 @@ gl847_set_lamp_power (Genesys_Device __sane_unused__ * dev,
   if (set)
     {
       sanei_genesys_set_reg_from_set (regs, REG03,
-				      sanei_genesys_read_reg_from_set (regs, REG03)
+				      sanei_genesys_read_reg_from_set (regs,
+								       REG03)
 				      | REG03_LAMPPWR);
     }
   else
     {
       sanei_genesys_set_reg_from_set (regs, REG03,
-				      sanei_genesys_read_reg_from_set (regs, REG03)
+				      sanei_genesys_read_reg_from_set (regs,
+								       REG03)
 				      & ~REG03_LAMPPWR);
     }
 }
@@ -1764,7 +1772,7 @@ gl847_start_action (Genesys_Device * dev)
 #ifndef UNIT_TESTING
 static
 #endif
-SANE_Status
+  SANE_Status
 gl847_stop_action (Genesys_Device * dev)
 {
   SANE_Status status;
@@ -1774,7 +1782,7 @@ gl847_stop_action (Genesys_Device * dev)
   DBGSTART;
 
   /* post scan gpio : without that HOMSNR is unreliable */
-  gl847_homsnr_gpio(dev);
+  gl847_homsnr_gpio (dev);
   status = sanei_genesys_get_status (dev, &val);
   if (DBG_LEVEL >= DBG_io)
     {
@@ -1827,7 +1835,7 @@ gl847_stop_action (Genesys_Device * dev)
 	  DBG (DBG_error,
 	       "%s: failed to read home sensor: %s\n", __func__,
 	       sane_strstatus (status));
-          DBGCOMPLETED;
+	  DBGCOMPLETED;
 	  return status;
 	}
 
@@ -1835,7 +1843,7 @@ gl847_stop_action (Genesys_Device * dev)
       if (!(val40 & REG40_DATAENB) && !(val40 & REG40_MOTMFLG)
 	  && !(val & REG41_MOTORENB))
 	{
-          DBGCOMPLETED;
+	  DBGCOMPLETED;
 	  return SANE_STATUS_GOOD;
 	}
 
@@ -1934,8 +1942,7 @@ gl847_end_scan (Genesys_Device * dev, Genesys_Register_Set * reg,
  * @param dev device to rewind
  * @returns SANE_STATUS_GOOD on success
  */
-GENESYS_STATIC
-SANE_Status gl847_rewind(Genesys_Device * dev)
+GENESYS_STATIC SANE_Status gl847_rewind (Genesys_Device * dev)
 {
   SANE_Status status;
   uint8_t byte;
@@ -1945,22 +1952,22 @@ SANE_Status gl847_rewind(Genesys_Device * dev)
   /* set motor reverse */
   RIE (sanei_genesys_read_register (dev, 0x02, &byte));
   byte |= 0x04;
-  RIE (sanei_genesys_write_register(dev, 0x02, byte));
+  RIE (sanei_genesys_write_register (dev, 0x02, byte));
 
   /* and start scan, then wait completion */
   RIE (gl847_begin_scan (dev, dev->reg, SANE_TRUE));
   do
     {
-      usleep(100*1000);
+      usleep (100 * 1000);
       RIE (sanei_genesys_read_register (dev, REG40, &byte));
     }
-  while(byte & REG40_MOTMFLG);
+  while (byte & REG40_MOTMFLG);
   RIE (gl847_end_scan (dev, dev->reg, SANE_TRUE));
 
   /* restore direction */
   RIE (sanei_genesys_read_register (dev, 0x02, &byte));
   byte &= 0xfb;
-  RIE (sanei_genesys_write_register(dev, 0x02, byte));
+  RIE (sanei_genesys_write_register (dev, 0x02, byte));
 
   DBGCOMPLETED;
   return SANE_STATUS_GOOD;
@@ -1972,8 +1979,7 @@ SANE_Status gl847_rewind(Genesys_Device * dev)
  * @param wait_until_home true to make the function waiting for head
  * to be home before returning, if fals returne immediately
  * @returns SANE_STATUS_GOO on success */
-GENESYS_STATIC
-SANE_Status
+GENESYS_STATIC SANE_Status
 gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_home)
 {
   Genesys_Register_Set local_reg[GENESYS_GL847_MAX_REGS];
@@ -1988,7 +1994,7 @@ gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_home)
        wait_until_home);
 
   /* post scan gpio : without that HOMSNR is unreliable */
-  gl847_homsnr_gpio(dev);
+  gl847_homsnr_gpio (dev);
 
   /* first read gives HOME_SENSOR true */
   status = sanei_genesys_get_status (dev, &val);
@@ -2028,46 +2034,49 @@ gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_home)
       return SANE_STATUS_GOOD;
     }
 
-  memcpy (local_reg, dev->reg, GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
+  memcpy (local_reg, dev->reg,
+	  GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
 
-  resolution=sanei_genesys_get_lowest_ydpi(dev);
+  resolution = sanei_genesys_get_lowest_ydpi (dev);
 
   /* TODO add scan_mode to the API */
-  scan_mode= dev->settings.scan_mode;
-  dev->settings.scan_mode=SCAN_MODE_LINEART;
+  scan_mode = dev->settings.scan_mode;
+  dev->settings.scan_mode = SCAN_MODE_LINEART;
   status = gl847_init_scan_regs (dev,
-			local_reg,
-			resolution,
-			resolution,
-			100,
-			30000,
-			100,
-			100,
-			8,
-			1,
-			0,
-			SCAN_FLAG_DISABLE_SHADING |
-			SCAN_FLAG_DISABLE_GAMMA |
-			SCAN_FLAG_IGNORE_LINE_DISTANCE);
+				 local_reg,
+				 resolution,
+				 resolution,
+				 100,
+				 30000,
+				 100,
+				 100,
+				 8,
+				 1,
+				 0,
+				 SCAN_FLAG_DISABLE_SHADING |
+				 SCAN_FLAG_DISABLE_GAMMA |
+				 SCAN_FLAG_IGNORE_LINE_DISTANCE);
   if (status != SANE_STATUS_GOOD)
     {
       DBG (DBG_error,
-           "gl847_slow_back_home: failed to set up registers: %s\n",
-           sane_strstatus (status));
+	   "gl847_slow_back_home: failed to set up registers: %s\n",
+	   sane_strstatus (status));
       DBGCOMPLETED;
       return status;
     }
 
-  dev->settings.scan_mode=scan_mode;
+  dev->settings.scan_mode = scan_mode;
 
   /* clear scan and feed count */
-  RIE (sanei_genesys_write_register (dev, REG0D, REG0D_CLRLNCNT | REG0D_CLRMCNT));
+  RIE (sanei_genesys_write_register
+       (dev, REG0D, REG0D_CLRLNCNT | REG0D_CLRMCNT));
 
   /* set up for reverse */
   r = sanei_genesys_get_address (local_reg, REG02);
   r->value |= REG02_MTRREV;
 
-  RIE (dev->model->cmd_set->bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS));
+  RIE (dev->model->cmd_set->
+       bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS));
 
   status = gl847_start_action (dev);
   if (status != SANE_STATUS_GOOD)
@@ -2077,12 +2086,13 @@ gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_home)
 	   sane_strstatus (status));
       gl847_stop_action (dev);
       /* send original registers */
-      dev->model->cmd_set->bulk_write_register (dev, dev->reg, GENESYS_GL847_MAX_REGS);
+      dev->model->cmd_set->bulk_write_register (dev, dev->reg,
+						GENESYS_GL847_MAX_REGS);
       return status;
     }
 
   /* post scan gpio : without that HOMSNR is unreliable */
-  gl847_homsnr_gpio(dev);
+  gl847_homsnr_gpio (dev);
 
   if (wait_until_home)
     {
@@ -2100,8 +2110,8 @@ gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_home)
 	  if (val & HOMESNR)	/* home sensor */
 	    {
 	      DBG (DBG_info, "gl847_slow_back_home: reached home position\n");
-              gl847_stop_action (dev);
-              dev->scanhead_position_in_steps = 0;
+	      gl847_stop_action (dev);
+	      dev->scanhead_position_in_steps = 0;
 	      DBGCOMPLETED;
 	      return SANE_STATUS_GOOD;
 	    }
@@ -2158,7 +2168,9 @@ gl847_search_start_position (Genesys_Device * dev)
     }
 
   /* send to scanner */
-  status = dev->model->cmd_set->bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS);
+  status =
+    dev->model->cmd_set->bulk_write_register (dev, local_reg,
+					      GENESYS_GL847_MAX_REGS);
   if (status != SANE_STATUS_GOOD)
     {
       DBG (DBG_error,
@@ -2289,7 +2301,8 @@ gl847_init_regs_for_coarse_calibration (Genesys_Device * dev)
        dev->sensor.optical_res / cksel, dev->settings.xres);
 
   status =
-    dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS);
+    dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg,
+					      GENESYS_GL847_MAX_REGS);
   if (status != SANE_STATUS_GOOD)
     {
       DBG (DBG_error,
@@ -2309,7 +2322,7 @@ gl847_init_regs_for_coarse_calibration (Genesys_Device * dev)
 #ifndef UNIT_TESTING
 static
 #endif
-SANE_Status
+  SANE_Status
 gl847_feed (Genesys_Device * dev, unsigned int steps)
 {
   Genesys_Register_Set local_reg[GENESYS_GL847_MAX_REGS];
@@ -2322,37 +2335,38 @@ gl847_feed (Genesys_Device * dev, unsigned int steps)
   DBG (DBG_io, "%s: steps=%d\n", __func__, steps);
 
   /* prepare local registers */
-  memcpy (local_reg, dev->reg, GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
+  memcpy (local_reg, dev->reg,
+	  GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
 
-  resolution=sanei_genesys_get_lowest_ydpi(dev);
+  resolution = sanei_genesys_get_lowest_ydpi (dev);
   status = gl847_init_scan_regs (dev,
-			local_reg,
-			resolution,
-			resolution,
-			0,
-			steps,
-			100,
-			3,
-			8,
-			3,
-			dev->settings.color_filter,
-			SCAN_FLAG_DISABLE_SHADING |
-			SCAN_FLAG_DISABLE_GAMMA |
-                        SCAN_FLAG_FEEDING |
-			SCAN_FLAG_IGNORE_LINE_DISTANCE);
+				 local_reg,
+				 resolution,
+				 resolution,
+				 0,
+				 steps,
+				 100,
+				 3,
+				 8,
+				 3,
+				 dev->settings.color_filter,
+				 SCAN_FLAG_DISABLE_SHADING |
+				 SCAN_FLAG_DISABLE_GAMMA |
+				 SCAN_FLAG_FEEDING |
+				 SCAN_FLAG_IGNORE_LINE_DISTANCE);
   if (status != SANE_STATUS_GOOD)
     {
       DBG (DBG_error,
-           "gl847_feed: failed to set up registers: %s\n",
-           sane_strstatus (status));
+	   "gl847_feed: failed to set up registers: %s\n",
+	   sane_strstatus (status));
       DBGCOMPLETED;
       return status;
     }
 
   /* set exposure to zero */
-  sanei_genesys_set_triple(local_reg,REG_EXPR,0);
-  sanei_genesys_set_triple(local_reg,REG_EXPG,0);
-  sanei_genesys_set_triple(local_reg,REG_EXPB,0);
+  sanei_genesys_set_triple (local_reg, REG_EXPR, 0);
+  sanei_genesys_set_triple (local_reg, REG_EXPG, 0);
+  sanei_genesys_set_triple (local_reg, REG_EXPB, 0);
 
   /* clear scan and feed count */
   RIE (sanei_genesys_write_register (dev, REG0D, REG0D_CLRLNCNT));
@@ -2363,16 +2377,19 @@ gl847_feed (Genesys_Device * dev, unsigned int steps)
   r->value &= ~REG01_SCAN;
 
   /* send registers */
-  RIE (dev->model->cmd_set->bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS));
+  RIE (dev->model->cmd_set->
+       bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS));
 
   status = gl847_start_action (dev);
   if (status != SANE_STATUS_GOOD)
     {
-      DBG (DBG_error, "%s: failed to start motor: %s\n", __func__, sane_strstatus (status));
+      DBG (DBG_error, "%s: failed to start motor: %s\n", __func__,
+	   sane_strstatus (status));
       gl847_stop_action (dev);
 
       /* restore original registers */
-      dev->model->cmd_set->bulk_write_register (dev, dev->reg, GENESYS_GL847_MAX_REGS);
+      dev->model->cmd_set->bulk_write_register (dev, dev->reg,
+						GENESYS_GL847_MAX_REGS);
       return status;
     }
 
@@ -2380,12 +2397,12 @@ gl847_feed (Genesys_Device * dev, unsigned int steps)
    * exceed 30s */
   do
     {
-          status = sanei_genesys_get_status (dev, &val);
+      status = sanei_genesys_get_status (dev, &val);
     }
   while (status == SANE_STATUS_GOOD && !(val & FEEDFSH));
 
   /* then stop scanning */
-  RIE(gl847_stop_action (dev));
+  RIE (gl847_stop_action (dev));
 
   DBGCOMPLETED;
   return SANE_STATUS_GOOD;
@@ -2403,50 +2420,58 @@ gl847_init_regs_for_shading (Genesys_Device * dev)
   dev->calib_channels = 3;
 
   /* initial calibration reg values */
-  memcpy (dev->calib_reg, dev->reg, GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
+  memcpy (dev->calib_reg, dev->reg,
+	  GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
 
-  dev->calib_resolution = sanei_genesys_compute_dpihw(dev,dev->settings.xres);
+  dev->calib_resolution =
+    sanei_genesys_compute_dpihw (dev, dev->settings.xres);
   dev->calib_lines = dev->model->shading_lines;
-  if(dev->calib_resolution==4800)
+  if (dev->calib_resolution == 4800)
     dev->calib_lines *= 2;
-  dev->calib_pixels = (dev->sensor.sensor_pixels*dev->calib_resolution)/dev->sensor.optical_res;
-  DBG (DBG_io, "%s: calib_lines  = %d\n", __func__, (int)dev->calib_lines);
-  DBG (DBG_io, "%s: calib_pixels = %d\n", __func__, (int)dev->calib_pixels);
+  dev->calib_pixels =
+    (dev->sensor.sensor_pixels * dev->calib_resolution) /
+    dev->sensor.optical_res;
+  DBG (DBG_io, "%s: calib_lines  = %d\n", __func__, (int) dev->calib_lines);
+  DBG (DBG_io, "%s: calib_pixels = %d\n", __func__, (int) dev->calib_pixels);
 
   /* this is aworkaround insufficent distance for slope
    * motor acceleration TODO special motor slope for shading  */
-  move=1;
-  if(dev->calib_resolution<1200)
+  move = 1;
+  if (dev->calib_resolution < 1200)
     {
-      move=40;
+      move = 40;
     }
 
   status = gl847_init_scan_regs (dev,
 				 dev->calib_reg,
-                                 dev->calib_resolution,
+				 dev->calib_resolution,
 				 dev->calib_resolution,
 				 0,
 				 move,
 				 dev->calib_pixels,
 				 dev->calib_lines,
-                                 16,
+				 16,
 				 dev->calib_channels,
 				 dev->settings.color_filter,
 				 SCAN_FLAG_DISABLE_SHADING |
 				 SCAN_FLAG_DISABLE_GAMMA |
-  				 SCAN_FLAG_DISABLE_BUFFER_FULL_MOVE |
+				 SCAN_FLAG_DISABLE_BUFFER_FULL_MOVE |
 				 SCAN_FLAG_IGNORE_LINE_DISTANCE);
 
   if (status != SANE_STATUS_GOOD)
     {
-      DBG (DBG_error, "%s: failed to setup scan: %s\n", __func__, sane_strstatus (status));
+      DBG (DBG_error, "%s: failed to setup scan: %s\n", __func__,
+	   sane_strstatus (status));
       return status;
     }
 
-  status = dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS);
+  status =
+    dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg,
+					      GENESYS_GL847_MAX_REGS);
   if (status != SANE_STATUS_GOOD)
     {
-      DBG (DBG_error, "%s: failed to bulk write registers: %s\n", __func__, sane_strstatus (status));
+      DBG (DBG_error, "%s: failed to bulk write registers: %s\n", __func__,
+	   sane_strstatus (status));
       return status;
     }
 
@@ -2477,7 +2502,7 @@ gl847_init_regs_for_scan (Genesys_Device * dev)
        dev->settings.yres, dev->settings.lines, dev->settings.pixels,
        dev->settings.tl_x, dev->settings.tl_y, dev->settings.scan_mode);
 
- /* channels */
+  /* channels */
   if (dev->settings.scan_mode == SCAN_MODE_COLOR)	/* single pass color */
     channels = 3;
   else
@@ -2514,22 +2539,22 @@ gl847_init_regs_for_scan (Genesys_Device * dev)
   move += dev->settings.tl_y;
   move = (move * move_dpi) / MM_PER_INCH;
   move -= dev->scanhead_position_in_steps;
-  DBG (DBG_info, "%s: move=%f steps\n",__func__, move);
+  DBG (DBG_info, "%s: move=%f steps\n", __func__, move);
 
   /* fast move to scan area */
   /* we don't move fast the whole distance since it would involve
    * computing acceleration/deceleration distance for scan
    * resolution. So leave a remainder for it so scan makes the final
    * move tuning */
-  if(channels*dev->settings.yres>=600 && move>700)
+  if (channels * dev->settings.yres >= 600 && move > 700)
     {
-      status = gl847_feed (dev, move-500);
+      status = gl847_feed (dev, move - 500);
       if (status != SANE_STATUS_GOOD)
-        {
-          DBG (DBG_error, "%s: failed to move to scan area\n",__func__);
-          return status;
-        }
-      move=500;
+	{
+	  DBG (DBG_error, "%s: failed to move to scan area\n", __func__);
+	  return status;
+	}
+      move = 500;
     }
 
   DBG (DBG_info, "gl124_init_regs_for_scan: move=%f steps\n", move);
@@ -2543,8 +2568,8 @@ gl847_init_regs_for_scan (Genesys_Device * dev)
   flags = 0;
 
   /* emulated lineart from gray data is required for now */
-  if(dev->settings.scan_mode == SCAN_MODE_LINEART
-     && dev->settings.dynamic_lineart)
+  if (dev->settings.scan_mode == SCAN_MODE_LINEART
+      && dev->settings.dynamic_lineart)
     {
       flags |= SCAN_FLAG_DYNAMIC_LINEART;
     }
@@ -2561,9 +2586,7 @@ gl847_init_regs_for_scan (Genesys_Device * dev)
 				 dev->settings.pixels,
 				 dev->settings.lines,
 				 depth,
-				 channels,
-                                 dev->settings.color_filter,
-                                 flags);
+				 channels, dev->settings.color_filter, flags);
 
   if (status != SANE_STATUS_GOOD)
     return status;
@@ -2585,10 +2608,10 @@ gl847_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
   uint32_t dpiset, dpihw, strpixel, endpixel;
   uint16_t tempo;
   uint32_t lines, channels;
-  uint8_t val,*buffer,*ptr,*src;
+  uint8_t val, *buffer, *ptr, *src;
 
   DBGSTART;
-  DBG( DBG_io2, "%s: writing %d bytes of shading data\n",__func__,size);
+  DBG (DBG_io2, "%s: writing %d bytes of shading data\n", __func__, size);
 
   /* shading data is plit in 3 (up to 5 with IR) areas
      write(0x10014000,0x00000dd8)
@@ -2597,82 +2620,90 @@ gl847_send_shading_data (Genesys_Device * dev, uint8_t * data, int size)
      write(0x10068000,0x00000dd8)
    */
   length = (uint32_t) (size / 3);
-  sanei_genesys_get_double(dev->reg,REG_STRPIXEL,&tempo);
-  strpixel=tempo;
-  sanei_genesys_get_double(dev->reg,REG_ENDPIXEL,&tempo);
-  endpixel=tempo;
+  sanei_genesys_get_double (dev->reg, REG_STRPIXEL, &tempo);
+  strpixel = tempo;
+  sanei_genesys_get_double (dev->reg, REG_ENDPIXEL, &tempo);
+  endpixel = tempo;
 
   /* compute deletion factor */
-  sanei_genesys_get_double(dev->reg,REG_DPISET,&tempo);
-  dpiset=tempo;
-  DBG( DBG_io2, "%s: STRPIXEL=%d, ENDPIXEL=%d, PIXELS=%d, DPISET=%d\n",__func__,strpixel,endpixel,endpixel-strpixel,dpiset);
-  dpihw=sanei_genesys_compute_dpihw(dev,dpiset);
-  factor=dpihw/dpiset;
-  DBG( DBG_io2, "%s: factor=%d\n",__func__,factor);
+  sanei_genesys_get_double (dev->reg, REG_DPISET, &tempo);
+  dpiset = tempo;
+  DBG (DBG_io2, "%s: STRPIXEL=%d, ENDPIXEL=%d, PIXELS=%d, DPISET=%d\n",
+       __func__, strpixel, endpixel, endpixel - strpixel, dpiset);
+  dpihw = sanei_genesys_compute_dpihw (dev, dpiset);
+  factor = dpihw / dpiset;
+  DBG (DBG_io2, "%s: factor=%d\n", __func__, factor);
 
-  if(DBG_LEVEL>=DBG_data)
+  if (DBG_LEVEL >= DBG_data)
     {
-      dev->binary=fopen("binary.pnm","wb");
-      sanei_genesys_get_triple(dev->reg, REG_LINCNT, &lines);
-      channels=dev->current_setup.channels;
-      if(dev->binary!=NULL)
-        {
-          fprintf(dev->binary,"P5\n%d %d\n%d\n",(endpixel-strpixel)/factor*channels,lines/channels,255);
-        }
+      dev->binary = fopen ("binary.pnm", "wb");
+      sanei_genesys_get_triple (dev->reg, REG_LINCNT, &lines);
+      channels = dev->current_setup.channels;
+      if (dev->binary != NULL)
+	{
+	  fprintf (dev->binary, "P5\n%d %d\n%d\n",
+		   (endpixel - strpixel) / factor * channels,
+		   lines / channels, 255);
+	}
     }
 
-  pixels=endpixel-strpixel;
+  pixels = endpixel - strpixel;
 
   /* since we're using SHDAREA, substract startx coordinate from shading */
-  strpixel-=((dev->sensor.CCD_start_xoffset*600)/dev->sensor.optical_res);
+  strpixel -=
+    ((dev->sensor.CCD_start_xoffset * 600) / dev->sensor.optical_res);
 
   /* turn pixel value into bytes 2x16 bits words */
-  strpixel*=2*2;
-  pixels*=2*2;
+  strpixel *= 2 * 2;
+  pixels *= 2 * 2;
 
   /* allocate temporary buffer */
-  buffer=(uint8_t *)malloc(pixels);
-  memset(buffer,0,pixels);
-  DBG( DBG_io2, "%s: using chunks of %d (0x%04x) bytes\n",__func__,pixels,pixels);
+  buffer = (uint8_t *) malloc (pixels);
+  memset (buffer, 0, pixels);
+  DBG (DBG_io2, "%s: using chunks of %d (0x%04x) bytes\n", __func__, pixels,
+       pixels);
 
   /* base addr of data has been written in reg D0-D4 in 4K word, so AHB address
    * is 8192*reg value */
 
   /* write actual color channel data */
-  for(i=0;i<3;i++)
+  for (i = 0; i < 3; i++)
     {
       /* build up actual shading data by copying the part from the full width one
        * to the one corresponding to SHDAREA */
-      ptr=buffer;
+      ptr = buffer;
 
       /* iterate on both sensor segment */
-      for(x=0;x<pixels;x+=4*factor)
-        {
-          /* coefficient source */
-          src=(data+strpixel+i*length)+x;
+      for (x = 0; x < pixels; x += 4 * factor)
+	{
+	  /* coefficient source */
+	  src = (data + strpixel + i * length) + x;
 
-          /* coefficient copy */
-          ptr[0]=src[0];
-          ptr[1]=src[1];
-          ptr[2]=src[2];
-          ptr[3]=src[3];
+	  /* coefficient copy */
+	  ptr[0] = src[0];
+	  ptr[1] = src[1];
+	  ptr[2] = src[2];
+	  ptr[3] = src[3];
 
-          /* next shading coefficient */
-          ptr+=4;
-        }
+	  /* next shading coefficient */
+	  ptr += 4;
+	}
 
-      RIE (sanei_genesys_read_register (dev, 0xd0+i, &val));
+      RIE (sanei_genesys_read_register (dev, 0xd0 + i, &val));
       addr = val * 8192 + 0x10000000;
-      status = sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, pixels, buffer);
+      status =
+	sanei_genesys_write_ahb (dev->dn, dev->usb_mode, addr, pixels,
+				 buffer);
       if (status != SANE_STATUS_GOOD)
-        {
-          DBG (DBG_error, "gl847_send_shading_data; write to AHB failed (%s)\n",
-	      sane_strstatus (status));
-          return status;
-        }
+	{
+	  DBG (DBG_error,
+	       "gl847_send_shading_data; write to AHB failed (%s)\n",
+	       sane_strstatus (status));
+	  return status;
+	}
     }
 
-  free(buffer);
+  free (buffer);
   DBGCOMPLETED;
 
   return status;
@@ -2705,22 +2736,24 @@ gl847_led_calibration (Genesys_Device * dev)
   DBGSTART;
 
   move = SANE_UNFIX (dev->model->y_offset_calib);
-  move = (move * (dev->motor.base_ydpi/4)) / MM_PER_INCH;
-  if(move>20)
+  move = (move * (dev->motor.base_ydpi / 4)) / MM_PER_INCH;
+  if (move > 20)
     {
-      RIE(gl847_feed (dev, move));
+      RIE (gl847_feed (dev, move));
     }
   DBG (DBG_io, "%s: move=%f steps\n", __func__, move);
 
   /* offset calibration is always done in color mode */
   channels = 3;
-  depth=16;
-  used_res=sanei_genesys_compute_dpihw(dev,dev->settings.xres);
-  sensor=get_sensor_profile(dev->model->ccd_type, used_res);
-  num_pixels = (dev->sensor.sensor_pixels*used_res)/dev->sensor.optical_res;
+  depth = 16;
+  used_res = sanei_genesys_compute_dpihw (dev, dev->settings.xres);
+  sensor = get_sensor_profile (dev->model->ccd_type, used_res);
+  num_pixels =
+    (dev->sensor.sensor_pixels * used_res) / dev->sensor.optical_res;
 
   /* initial calibration reg values */
-  memcpy (dev->calib_reg, dev->reg, GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
+  memcpy (dev->calib_reg, dev->reg,
+	  GENESYS_GL847_MAX_REGS * sizeof (Genesys_Register_Set));
 
   /* set up for the calibration scan */
   status = gl847_init_scan_regs (dev,
@@ -2730,9 +2763,9 @@ gl847_led_calibration (Genesys_Device * dev)
 				 0,
 				 0,
 				 num_pixels,
-                                 1,
-                                 depth,
-                                 channels,
+				 1,
+				 depth,
+				 channels,
 				 dev->settings.color_filter,
 				 SCAN_FLAG_DISABLE_SHADING |
 				 SCAN_FLAG_DISABLE_GAMMA |
@@ -2740,27 +2773,28 @@ gl847_led_calibration (Genesys_Device * dev)
 				 SCAN_FLAG_IGNORE_LINE_DISTANCE);
   if (status != SANE_STATUS_GOOD)
     {
-      DBG (DBG_error, "%s: failed to setup scan: %s\n", __func__, sane_strstatus (status));
+      DBG (DBG_error, "%s: failed to setup scan: %s\n", __func__,
+	   sane_strstatus (status));
       return status;
     }
 
-  total_size = num_pixels * channels * (depth/8) * 1;	/* colors * bytes_per_color * scan lines */
+  total_size = num_pixels * channels * (depth / 8) * 1;	/* colors * bytes_per_color * scan lines */
   line = malloc (total_size);
   if (!line)
     return SANE_STATUS_NO_MEM;
 
   /* initial loop values and boundaries */
-  exp[0]=sensor->expr;
-  exp[1]=sensor->expg;
-  exp[2]=sensor->expb;
+  exp[0] = sensor->expr;
+  exp[1] = sensor->expg;
+  exp[2] = sensor->expb;
 
-  bottom[0]=29000;
-  bottom[1]=29000;
-  bottom[2]=29000;
+  bottom[0] = 29000;
+  bottom[1] = 29000;
+  bottom[2] = 29000;
 
-  top[0]=41000;
-  top[1]=51000;
-  top[2]=51000;
+  top[0] = 41000;
+  top[1] = 51000;
+  top[2] = 51000;
 
   turn = 0;
 
@@ -2769,16 +2803,19 @@ gl847_led_calibration (Genesys_Device * dev)
   do
     {
       /* set up exposure */
-      sanei_genesys_set_double(dev->calib_reg,REG_EXPR,exp[0]);
-      sanei_genesys_set_double(dev->calib_reg,REG_EXPG,exp[1]);
-      sanei_genesys_set_double(dev->calib_reg,REG_EXPB,exp[2]);
+      sanei_genesys_set_double (dev->calib_reg, REG_EXPR, exp[0]);
+      sanei_genesys_set_double (dev->calib_reg, REG_EXPG, exp[1]);
+      sanei_genesys_set_double (dev->calib_reg, REG_EXPB, exp[2]);
 
       /* write registers and scan data */
-      RIEF (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS), line);
+      RIEF (dev->model->cmd_set->
+	    bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),
+	    line);
 
       DBG (DBG_info, "gl847_led_calibration: starting line reading\n");
       RIEF (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE), line);
-      RIEF (sanei_genesys_read_data_from_scanner (dev, line, total_size), line);
+      RIEF (sanei_genesys_read_data_from_scanner (dev, line, total_size),
+	    line);
 
       /* stop scanning */
       RIEF (gl847_stop_action (dev), line);
@@ -2786,7 +2823,8 @@ gl847_led_calibration (Genesys_Device * dev)
       if (DBG_LEVEL >= DBG_data)
 	{
 	  snprintf (fn, 20, "led_%02d.pnm", turn);
-	  sanei_genesys_write_pnm_file (fn, line, depth, channels, num_pixels, 1);
+	  sanei_genesys_write_pnm_file (fn, line, depth, channels, num_pixels,
+					1);
 	}
 
       /* compute average */
@@ -2809,34 +2847,36 @@ gl847_led_calibration (Genesys_Device * dev)
 	  avg[j] /= num_pixels;
 	}
 
-      DBG (DBG_info, "gl847_led_calibration: average: %d,%d,%d\n", avg[0], avg[1], avg[2]);
+      DBG (DBG_info, "gl847_led_calibration: average: %d,%d,%d\n", avg[0],
+	   avg[1], avg[2]);
 
       /* check if exposure gives average within the boundaries */
       acceptable = SANE_TRUE;
-      for(i=0;i<3;i++)
-        {
-          if(avg[i]<bottom[i])
-            {
-              exp[i]=(exp[i]*bottom[i])/avg[i];
-              acceptable = SANE_FALSE;
-            }
-          if(avg[i]>top[i])
-            {
-              exp[i]=(exp[i]*top[i])/avg[i];
-              acceptable = SANE_FALSE;
-            }
-        }
+      for (i = 0; i < 3; i++)
+	{
+	  if (avg[i] < bottom[i])
+	    {
+	      exp[i] = (exp[i] * bottom[i]) / avg[i];
+	      acceptable = SANE_FALSE;
+	    }
+	  if (avg[i] > top[i])
+	    {
+	      exp[i] = (exp[i] * top[i]) / avg[i];
+	      acceptable = SANE_FALSE;
+	    }
+	}
 
       turn++;
     }
   while (!acceptable && turn < 100);
 
-  DBG (DBG_info, "gl847_led_calibration: acceptable exposure: %d,%d,%d\n", exp[0], exp[1], exp[2]);
+  DBG (DBG_info, "gl847_led_calibration: acceptable exposure: %d,%d,%d\n",
+       exp[0], exp[1], exp[2]);
 
   /* set these values as final ones for scan */
-  sanei_genesys_set_double(dev->reg,REG_EXPR,exp[0]);
-  sanei_genesys_set_double(dev->reg,REG_EXPG,exp[1]);
-  sanei_genesys_set_double(dev->reg,REG_EXPB,exp[2]);
+  sanei_genesys_set_double (dev->reg, REG_EXPR, exp[0]);
+  sanei_genesys_set_double (dev->reg, REG_EXPG, exp[1]);
+  sanei_genesys_set_double (dev->reg, REG_EXPB, exp[2]);
 
   /* store in this struct since it is the one used by cache calibration */
   dev->sensor.regs_0x10_0x1d[0] = (exp[0] >> 8) & 0xff;
@@ -2850,9 +2890,9 @@ gl847_led_calibration (Genesys_Device * dev)
   free (line);
 
   /* go back home */
-  if(move>20)
+  if (move > 20)
     {
-      status=gl847_slow_back_home (dev, SANE_TRUE);
+      status = gl847_slow_back_home (dev, SANE_TRUE);
     }
 
   DBGCOMPLETED;
@@ -2866,18 +2906,20 @@ static SANE_Status
 gl847_init_gpio (Genesys_Device * dev)
 {
   SANE_Status status = SANE_STATUS_GOOD;
-  int idx=0;
+  int idx = 0;
 
   DBGSTART;
 
   /* search GPIO profile */
-  while(gpios[idx].sensor_id!=0 && dev->model->gpo_type!=gpios[idx].sensor_id)
+  while (gpios[idx].sensor_id != 0
+	 && dev->model->gpo_type != gpios[idx].sensor_id)
     {
       idx++;
     }
-  if(gpios[idx].sensor_id==0)
+  if (gpios[idx].sensor_id == 0)
     {
-      DBG (DBG_error, "%s: failed to find GPIO profile for sensor_id=%d\n", __func__, dev->model->ccd_type);
+      DBG (DBG_error, "%s: failed to find GPIO profile for sensor_id=%d\n",
+	   __func__, dev->model->ccd_type);
       return SANE_STATUS_INVAL;
     }
 
@@ -2954,14 +2996,14 @@ gl847_init_memory_layout (Genesys_Device * dev)
   /* size for each buffer is 0x16d*1k word */
   sanei_genesys_write_register (dev, 0xe0, layouts[idx].re0);
   sanei_genesys_write_register (dev, 0xe1, layouts[idx].re1);
-  /* R-Channel ODD image buffer end-address 0x0291->0x148800 => size=0xB6800*/
+  /* R-Channel ODD image buffer end-address 0x0291->0x148800 => size=0xB6800 */
   sanei_genesys_write_register (dev, 0xe2, layouts[idx].re2);
   sanei_genesys_write_register (dev, 0xe3, layouts[idx].re3);
 
   /* R-Channel EVEN image buffer 0x0292 */
   sanei_genesys_write_register (dev, 0xe4, layouts[idx].re4);
   sanei_genesys_write_register (dev, 0xe5, layouts[idx].re5);
-  /* R-Channel EVEN image buffer end-address 0x03ff*/
+  /* R-Channel EVEN image buffer end-address 0x03ff */
   sanei_genesys_write_register (dev, 0xe6, layouts[idx].re6);
   sanei_genesys_write_register (dev, 0xe7, layouts[idx].re7);
 
@@ -3001,7 +3043,7 @@ gl847_boot (Genesys_Device * dev, SANE_Bool cold)
   DBGSTART;
 
   /* reset ASIC if cold boot */
-  if(cold)
+  if (cold)
     {
       RIE (sanei_genesys_write_register (dev, 0x0e, 0x01));
       RIE (sanei_genesys_write_register (dev, 0x0e, 0x00));
@@ -3012,14 +3054,16 @@ gl847_boot (Genesys_Device * dev, SANE_Bool cold)
   if (val & REG40_CHKVER)
     {
       RIE (sanei_genesys_read_register (dev, 0x00, &val));
-      DBG (DBG_info, "%s: reported version for genesys chip is 0x%02x\n", __func__, val);
+      DBG (DBG_info, "%s: reported version for genesys chip is 0x%02x\n",
+	   __func__, val);
     }
 
   /* Set default values for registers */
   gl847_init_registers (dev);
 
   /* Write initial registers */
-  RIE (dev->model->cmd_set->bulk_write_register (dev, dev->reg, GENESYS_GL847_MAX_REGS));
+  RIE (dev->model->cmd_set->
+       bulk_write_register (dev, dev->reg, GENESYS_GL847_MAX_REGS));
 
   /* Enable DRAM by setting a rising edge on bit 3 of reg 0x0b */
   val = dev->reg[reg_0x0b].value & REG0B_DRAMSEL;
@@ -3055,14 +3099,15 @@ gl847_boot (Genesys_Device * dev, SANE_Bool cold)
 #ifndef UNIT_TESTING
 static
 #endif
-SANE_Status gl847_init (Genesys_Device * dev)
+  SANE_Status
+gl847_init (Genesys_Device * dev)
 {
   SANE_Status status;
 
   DBG_INIT ();
   DBGSTART;
 
-  status=sanei_genesys_asic_init(dev, GENESYS_GL847_MAX_REGS);
+  status = sanei_genesys_asic_init (dev, GENESYS_GL847_MAX_REGS);
 
   DBGCOMPLETED;
   return status;
@@ -3077,19 +3122,19 @@ gl847_update_hardware_sensors (Genesys_Scanner * s)
   SANE_Status status = SANE_STATUS_GOOD;
   uint8_t val;
   uint8_t scan, file, email, copy;
-  switch(s->dev->model->gpo_type)
+  switch (s->dev->model->gpo_type)
     {
-      case GPO_CANONLIDE700:
-        scan=0x04;
-        file=0x02;
-        email=0x01;
-        copy=0x08;
-        break;
-      default:
-        scan=0x01;
-        file=0x02;
-        email=0x04;
-        copy=0x08;
+    case GPO_CANONLIDE700:
+      scan = 0x04;
+      file = 0x02;
+      email = 0x01;
+      copy = 0x08;
+      break;
+    default:
+      scan = 0x01;
+      file = 0x02;
+      email = 0x04;
+      copy = 0x08;
     }
   RIE (sanei_genesys_read_register (s->dev, REG6D, &val));
 
@@ -3181,7 +3226,7 @@ gl847_search_strip (Genesys_Device * dev, SANE_Bool forward, SANE_Bool black)
 				 SCAN_FLAG_DISABLE_GAMMA);
   if (status != SANE_STATUS_GOOD)
     {
-      free(data);
+      free (data);
       DBG (DBG_error,
 	   "gl847_search_strip: failed to setup for scan: %s\n",
 	   sane_strstatus (status));
@@ -3196,10 +3241,12 @@ gl847_search_strip (Genesys_Device * dev, SANE_Bool forward, SANE_Bool black)
     r->value |= REG02_MTRREV;
 
 
-  status = dev->model->cmd_set->bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS);
+  status =
+    dev->model->cmd_set->bulk_write_register (dev, local_reg,
+					      GENESYS_GL847_MAX_REGS);
   if (status != SANE_STATUS_GOOD)
     {
-      free(data);
+      free (data);
       DBG (DBG_error,
 	   "gl847_search_strip: Failed to bulk write registers: %s\n",
 	   sane_strstatus (status));
@@ -3244,7 +3291,8 @@ gl847_search_strip (Genesys_Device * dev, SANE_Bool forward, SANE_Bool black)
   if (DBG_LEVEL >= DBG_data)
     {
       sprintf (title, "search_strip_%s_%s%02d.pnm",
-	       black ? "black" : "white", forward ? "fwd" : "bwd", (int)pass);
+	       black ? "black" : "white", forward ? "fwd" : "bwd",
+	       (int) pass);
       sanei_genesys_write_pnm_file (title, data, depth, channels, pixels,
 				    lines);
     }
@@ -3254,7 +3302,8 @@ gl847_search_strip (Genesys_Device * dev, SANE_Bool forward, SANE_Bool black)
   while (pass < 20 && !found)
     {
       status =
-	dev->model->cmd_set->bulk_write_register (dev, local_reg, GENESYS_GL847_MAX_REGS);
+	dev->model->cmd_set->bulk_write_register (dev, local_reg,
+						  GENESYS_GL847_MAX_REGS);
       if (status != SANE_STATUS_GOOD)
 	{
 	  DBG (DBG_error,
@@ -3301,9 +3350,10 @@ gl847_search_strip (Genesys_Device * dev, SANE_Bool forward, SANE_Bool black)
       if (DBG_LEVEL >= DBG_data)
 	{
 	  sprintf (title, "search_strip_%s_%s%02d.pnm",
-		   black ? "black" : "white", forward ? "fwd" : "bwd", (int)pass);
-	  sanei_genesys_write_pnm_file (title, data, depth, channels,
-					pixels, lines);
+		   black ? "black" : "white", forward ? "fwd" : "bwd",
+		   (int) pass);
+	  sanei_genesys_write_pnm_file (title, data, depth, channels, pixels,
+					lines);
 	}
 
       /* search data to find black strip */
@@ -3466,12 +3516,13 @@ gl847_offset_calibration (Genesys_Device * dev)
 
   /* offset calibration is always done in color mode */
   channels = 3;
-  resolution=dev->sensor.optical_res;
+  resolution = dev->sensor.optical_res;
   dev->calib_pixels = dev->sensor.sensor_pixels;
-  lines=1;
-  bpp=8;
-  pixels= (dev->sensor.sensor_pixels*resolution) / dev->sensor.optical_res;
-  black_pixels = (dev->sensor.black_pixels * resolution) / dev->sensor.optical_res;
+  lines = 1;
+  bpp = 8;
+  pixels = (dev->sensor.sensor_pixels * resolution) / dev->sensor.optical_res;
+  black_pixels =
+    (dev->sensor.black_pixels * resolution) / dev->sensor.optical_res;
   DBG (DBG_io2, "gl847_offset_calibration: black_pixels=%d\n", black_pixels);
 
   status = gl847_init_scan_regs (dev,
@@ -3499,7 +3550,7 @@ gl847_offset_calibration (Genesys_Device * dev)
   gl847_set_motor_power (dev->calib_reg, SANE_FALSE);
 
   /* allocate memory for scans */
-  total_size = pixels * channels * lines * (bpp/8);	/* colors * bytes_per_color * scan lines */
+  total_size = pixels * channels * lines * (bpp / 8);	/* colors * bytes_per_color * scan lines */
 
   first_line = malloc (total_size);
   if (!first_line)
@@ -3523,18 +3574,24 @@ gl847_offset_calibration (Genesys_Device * dev)
   dev->frontend.offset[1] = bottom;
   dev->frontend.offset[2] = bottom;
 
-  RIEF2 (gl847_set_fe(dev, AFE_SET),first_line, second_line);
-  RIEF2 (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),first_line, second_line);
+  RIEF2 (gl847_set_fe (dev, AFE_SET), first_line, second_line);
+  RIEF2 (dev->model->cmd_set->
+	 bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),
+	 first_line, second_line);
   DBG (DBG_info, "gl847_offset_calibration: starting first line reading\n");
-  RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE),first_line, second_line);
-  RIEF2 (sanei_genesys_read_data_from_scanner (dev, first_line, total_size),first_line, second_line);
+  RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE), first_line,
+	 second_line);
+  RIEF2 (sanei_genesys_read_data_from_scanner (dev, first_line, total_size),
+	 first_line, second_line);
   if (DBG_LEVEL >= DBG_data)
-   {
-      snprintf(title,20,"offset%03d.pnm",bottom);
-      sanei_genesys_write_pnm_file (title, first_line, bpp, channels, pixels, lines);
-   }
+    {
+      snprintf (title, 20, "offset%03d.pnm", bottom);
+      sanei_genesys_write_pnm_file (title, first_line, bpp, channels, pixels,
+				    lines);
+    }
 
-  bottomavg = dark_average (first_line, pixels, lines, channels, black_pixels);
+  bottomavg =
+    dark_average (first_line, pixels, lines, channels, black_pixels);
   DBG (DBG_io2, "gl847_offset_calibration: bottom avg=%d\n", bottomavg);
 
   /* now top value */
@@ -3542,11 +3599,15 @@ gl847_offset_calibration (Genesys_Device * dev)
   dev->frontend.offset[0] = top;
   dev->frontend.offset[1] = top;
   dev->frontend.offset[2] = top;
-  RIEF2 (gl847_set_fe(dev, AFE_SET),first_line, second_line);
-  RIEF2 (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),first_line, second_line);
+  RIEF2 (gl847_set_fe (dev, AFE_SET), first_line, second_line);
+  RIEF2 (dev->model->cmd_set->
+	 bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),
+	 first_line, second_line);
   DBG (DBG_info, "gl847_offset_calibration: starting second line reading\n");
-  RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE),first_line, second_line);
-  RIEF2 (sanei_genesys_read_data_from_scanner (dev, second_line, total_size),first_line, second_line);
+  RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE), first_line,
+	 second_line);
+  RIEF2 (sanei_genesys_read_data_from_scanner (dev, second_line, total_size),
+	 first_line, second_line);
 
   topavg = dark_average (second_line, pixels, lines, channels, black_pixels);
   DBG (DBG_io2, "gl847_offset_calibration: top avg=%d\n", topavg);
@@ -3562,16 +3623,23 @@ gl847_offset_calibration (Genesys_Device * dev)
       dev->frontend.offset[2] = (top + bottom) / 2;
 
       /* scan with no move */
-      RIEF2 (gl847_set_fe(dev, AFE_SET),first_line, second_line);
-      RIEF2 (dev->model->cmd_set->bulk_write_register (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS),first_line, second_line);
-      DBG (DBG_info, "gl847_offset_calibration: starting second line reading\n");
-      RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE),first_line, second_line);
-      RIEF2 (sanei_genesys_read_data_from_scanner (dev, second_line, total_size),first_line, second_line);
+      RIEF2 (gl847_set_fe (dev, AFE_SET), first_line, second_line);
+      RIEF2 (dev->model->cmd_set->
+	     bulk_write_register (dev, dev->calib_reg,
+				  GENESYS_GL847_MAX_REGS), first_line,
+	     second_line);
+      DBG (DBG_info,
+	   "gl847_offset_calibration: starting second line reading\n");
+      RIEF2 (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE), first_line,
+	     second_line);
+      RIEF2 (sanei_genesys_read_data_from_scanner
+	     (dev, second_line, total_size), first_line, second_line);
 
       if (DBG_LEVEL >= DBG_data)
 	{
 	  sprintf (title, "offset%03d.pnm", dev->frontend.offset[1]);
-	  sanei_genesys_write_pnm_file (title, second_line, bpp, channels, pixels, lines);
+	  sanei_genesys_write_pnm_file (title, second_line, bpp, channels,
+					pixels, lines);
 	}
 
       avg = dark_average (second_line, pixels, lines, channels, black_pixels);
@@ -3590,7 +3658,9 @@ gl847_offset_calibration (Genesys_Device * dev)
 	  bottom = dev->frontend.offset[1];
 	}
     }
-  DBG (DBG_info, "gl847_offset_calibration: offset=(%d,%d,%d)\n", dev->frontend.offset[0], dev->frontend.offset[1], dev->frontend.offset[2]);
+  DBG (DBG_info, "gl847_offset_calibration: offset=(%d,%d,%d)\n",
+       dev->frontend.offset[0], dev->frontend.offset[1],
+       dev->frontend.offset[2]);
 
   /* cleanup before return */
   free (first_line);
@@ -3609,7 +3679,7 @@ gl847_coarse_gain_calibration (Genesys_Device * dev, int dpi)
   int i, j, channels;
   SANE_Status status = SANE_STATUS_GOOD;
   int max[3];
-  float gain[3],coeff;
+  float gain[3], coeff;
   int val, code, lines;
   int resolution;
   int bpp;
@@ -3628,19 +3698,19 @@ gl847_coarse_gain_calibration (Genesys_Device * dev, int dpi)
   channels = 3;
 
   /* follow CKSEL */
-  if(dev->settings.xres<dev->sensor.optical_res)
+  if (dev->settings.xres < dev->sensor.optical_res)
     {
-      coeff=0.9;
+      coeff = 0.9;
       /*resolution=dev->sensor.optical_res/2; */
-      resolution=dev->sensor.optical_res;
+      resolution = dev->sensor.optical_res;
     }
   else
     {
-      resolution=dev->sensor.optical_res;
-      coeff=1.0;
+      resolution = dev->sensor.optical_res;
+      coeff = 1.0;
     }
-  lines=10;
-  bpp=8;
+  lines = 10;
+  bpp = 8;
   pixels = (dev->sensor.sensor_pixels * resolution) / dev->sensor.optical_res;
 
   status = gl847_init_scan_regs (dev,
@@ -3650,9 +3720,9 @@ gl847_coarse_gain_calibration (Genesys_Device * dev, int dpi)
 				 0,
 				 0,
 				 pixels,
-                                 lines,
-                                 bpp,
-                                 channels,
+				 lines,
+				 bpp,
+				 channels,
 				 dev->settings.color_filter,
 				 SCAN_FLAG_DISABLE_SHADING |
 				 SCAN_FLAG_DISABLE_GAMMA |
@@ -3671,49 +3741,50 @@ gl847_coarse_gain_calibration (Genesys_Device * dev, int dpi)
   RIE (dev->model->cmd_set->bulk_write_register
        (dev, dev->calib_reg, GENESYS_GL847_MAX_REGS));
 
-  total_size = pixels * channels * (16/bpp) * lines;
+  total_size = pixels * channels * (16 / bpp) * lines;
 
   line = malloc (total_size);
   if (!line)
     return SANE_STATUS_NO_MEM;
 
-  RIEF (gl847_set_fe(dev, AFE_SET), line);
+  RIEF (gl847_set_fe (dev, AFE_SET), line);
   RIEF (gl847_begin_scan (dev, dev->calib_reg, SANE_TRUE), line);
   RIEF (sanei_genesys_read_data_from_scanner (dev, line, total_size), line);
 
   if (DBG_LEVEL >= DBG_data)
-    sanei_genesys_write_pnm_file ("coarse.pnm", line, bpp, channels, pixels, lines);
+    sanei_genesys_write_pnm_file ("coarse.pnm", line, bpp, channels, pixels,
+				  lines);
 
   /* average value on each channel */
   for (j = 0; j < channels; j++)
     {
       max[j] = 0;
-      for (i = pixels/4; i < (pixels*3/4); i++)
+      for (i = pixels / 4; i < (pixels * 3 / 4); i++)
 	{
-          if(bpp==16)
-            {
-	  if (dev->model->is_cis)
-	    val =
-	      line[i * 2 + j * 2 * pixels + 1] * 256 +
-	      line[i * 2 + j * 2 * pixels];
+	  if (bpp == 16)
+	    {
+	      if (dev->model->is_cis)
+		val =
+		  line[i * 2 + j * 2 * pixels + 1] * 256 +
+		  line[i * 2 + j * 2 * pixels];
+	      else
+		val =
+		  line[i * 2 * channels + 2 * j + 1] * 256 +
+		  line[i * 2 * channels + 2 * j];
+	    }
 	  else
-	    val =
-	      line[i * 2 * channels + 2 * j + 1] * 256 +
-	      line[i * 2 * channels + 2 * j];
-            }
-          else
-            {
-	  if (dev->model->is_cis)
-	    val = line[i + j * pixels];
-	  else
-	    val = line[i * channels + j];
-            }
+	    {
+	      if (dev->model->is_cis)
+		val = line[i + j * pixels];
+	      else
+		val = line[i * channels + j];
+	    }
 
-	    max[j] += val;
+	  max[j] += val;
 	}
-      max[j] = max[j] / (pixels/2);
+      max[j] = max[j] / (pixels / 2);
 
-      gain[j] = ((float) dev->sensor.gain_white_ref*coeff) / max[j];
+      gain[j] = ((float) dev->sensor.gain_white_ref * coeff) / max[j];
 
       /* turn logical gain value into gain code, checking for overflow */
       code = 283 - 208 / gain[j];
@@ -3747,7 +3818,7 @@ gl847_coarse_gain_calibration (Genesys_Device * dev, int dpi)
 
   RIE (gl847_stop_action (dev));
 
-  status=gl847_slow_back_home (dev, SANE_TRUE);
+  status = gl847_slow_back_home (dev, SANE_TRUE);
 
   DBGCOMPLETED;
   return status;
@@ -3759,7 +3830,7 @@ static Genesys_Command_Set gl847_cmd_set = {
   "gl847-generic",		/* the name of this set */
 
   gl847_init,
-  NULL, /*gl847_init_regs_for_warmup*/
+  NULL,				/*gl847_init_regs_for_warmup */
   gl847_init_regs_for_coarse_calibration,
   gl847_init_regs_for_shading,
   gl847_init_regs_for_scan,
@@ -3801,9 +3872,9 @@ static Genesys_Command_Set gl847_cmd_set = {
 
   gl847_update_hardware_sensors,
 
-  NULL, /* no known gl847 sheetfed scanner */
-  NULL, /* no known gl847 sheetfed scanner */
-  NULL, /* no known gl847 sheetfed scanner */
+  NULL,				/* no known gl847 sheetfed scanner */
+  NULL,				/* no known gl847 sheetfed scanner */
+  NULL,				/* no known gl847 sheetfed scanner */
   gl847_search_strip,
 
   sanei_genesys_is_compatible_calibration,
