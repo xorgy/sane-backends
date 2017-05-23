@@ -95,6 +95,7 @@ SANE_Status gl847_slow_back_home (Genesys_Device * dev, SANE_Bool wait_until_hom
 #define REG05_GMMENB	0x08
 #define REG05_MTLBASE	0x03
 
+#define REG06 		0x06
 #define REG06_SCANMOD	0xe0
 #define REG06S_SCANMOD	5
 #define REG06_PWRBIT	0x10
